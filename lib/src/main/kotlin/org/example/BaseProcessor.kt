@@ -1,6 +1,8 @@
 package org.example
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDateTime
 
@@ -16,10 +18,12 @@ abstract class BaseProcessor : DataProcessor {
      * @param message The message to log
      */
     protected open suspend fun logOperation(message: String) {
-        val timestamp = LocalDateTime.now()
-        val logMessage = "[$timestamp][${getProcessorType()}] $message\n"
-        logFile.appendText(logMessage)
-        println(logMessage.trim())
+        withContext(Dispatchers.IO) {
+            val timestamp = LocalDateTime.now()
+            val logMessage = "[$timestamp][${getProcessorType()}] $message\n"
+            logFile.appendText(logMessage)
+            println(logMessage.trim())
+        }
     }
 
     /**
@@ -34,8 +38,10 @@ abstract class BaseProcessor : DataProcessor {
      */
     protected suspend fun performSlowOperation() {
         delay(50)
-        val tempDir = File(System.getProperty("java.io.tmpdir"))
-        tempDir.listFiles()?.size
+        withContext(Dispatchers.IO) {
+            val tempDir = File(System.getProperty("java.io.tmpdir"))
+            tempDir.listFiles()?.size
+        }
     }
 }
 

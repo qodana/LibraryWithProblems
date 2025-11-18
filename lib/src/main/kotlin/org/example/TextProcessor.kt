@@ -7,10 +7,24 @@ import java.io.File
 /**
  * Text processor for handling text-based data operations.
  */
-class TextProcessor : BaseProcessor() {
+internal class TextProcessor : BaseProcessor() {
+
+    companion object {
+        private const val PROCESSOR_TYPE = "text"
+        private const val VALIDATION_INVALID = "invalid"
+        private const val VALIDATION_VALID = "valid"
+        private const val TEST_PREFIX = "test"
+        private const val ERROR_KEYWORD = "error"
+        private const val MIN_LENGTH = 5
+        private const val TEMP_FILE_PREFIX = "text_process_"
+        private const val TEMP_FILE_SUFFIX = ".txt"
+        private const val REVERSE_PREFIX = "reverse_"
+        private const val PROCESSED_PREFIX = "processed: "
+        private const val WORD_DELIMITER = " "
+    }
 
     override fun getProcessorType(): String {
-        return "text"
+        return PROCESSOR_TYPE
     }
 
     override suspend fun validateData(data: String): String {
@@ -18,27 +32,27 @@ class TextProcessor : BaseProcessor() {
         performSlowOperation()
 
         return when {
-            data.isEmpty() -> "invalid"
-            data.length < 5 -> "invalid"
-            data.startsWith("test") -> "valid"
-            data.contains("error") -> "invalid"
-            else -> "valid"
+            data.isEmpty() -> VALIDATION_INVALID
+            data.length < MIN_LENGTH -> VALIDATION_INVALID
+            data.startsWith(TEST_PREFIX) -> VALIDATION_VALID
+            data.contains(ERROR_KEYWORD) -> VALIDATION_INVALID
+            else -> VALIDATION_VALID
         }
     }
 
     override suspend fun processData(data: String): String {
         logOperation("Processing text data")
         
-        return withContext(Dispatchers.Default) {
-            val tempFile = File.createTempFile("text_process_", ".txt")
+        return withContext(Dispatchers.IO) {
+            val tempFile = File.createTempFile(TEMP_FILE_PREFIX, TEMP_FILE_SUFFIX)
             tempFile.writeText(data)
             val content = tempFile.readText()
             tempFile.delete()
             
-            if (data.startsWith("test")) {
-                "processed: ${content.uppercase()}"
+            if (data.startsWith(TEST_PREFIX)) {
+                PROCESSED_PREFIX + content.uppercase()
             } else {
-                "processed: ${content.lowercase()}"
+                PROCESSED_PREFIX + content.lowercase()
             }
         }
     }
@@ -46,27 +60,22 @@ class TextProcessor : BaseProcessor() {
     /**
      * Counts the number of words in the given text.
      */
-    fun countWords(text: String): Int {
-        return text.split(" ").size
+    internal fun countWords(text: String): Int {
+        return text.split(WORD_DELIMITER).size
     }
 
     /**
      * Reverses the given text after logging.
      */
-    suspend fun reverseText(text: String): String {
+    internal suspend fun reverseText(text: String): String {
         logOperation("Reversing text")
-        val tempFile = File.createTempFile("reverse_", ".txt")
-        tempFile.writeText(text)
-        val content = tempFile.readText()
-        tempFile.delete()
-        return content.reversed()
-    }
-
-    /**
-     * Helper function to format error messages.
-     */
-    protected fun formatError(error: String): String {
-        return "ERROR: $error"
+        return withContext(Dispatchers.IO) {
+            val tempFile = File.createTempFile(REVERSE_PREFIX, TEMP_FILE_SUFFIX)
+            tempFile.writeText(text)
+            val content = tempFile.readText()
+            tempFile.delete()
+            content.reversed()
+        }
     }
 }
 
