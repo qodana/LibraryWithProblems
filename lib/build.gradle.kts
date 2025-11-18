@@ -19,6 +19,9 @@ repositories {
 }
 
 dependencies {
+    // Coroutines for async operations
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
     // Use JUnit Jupiter for testing.
     testImplementation(libs.junit.jupiter)
 
